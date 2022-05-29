@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
-project(img_trans LANGUAGES CXX)
+project(image_batch LANGUAGES CXX)
 
-set(BINARY_NAME "img_trans")
+set(BINARY_NAME "image_batch")
 
 cmake_policy(SET CMP0063 NEW)
 
