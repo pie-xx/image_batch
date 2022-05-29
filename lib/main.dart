@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:isolate';
+
 import 'package:image/image.dart' as imgLib;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -33,6 +35,13 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+class TransCmd {
+  SendPort? sendport;
+  String? srcdir;
+  String? dstdir;
+  TransCmd(this.sendport, this.srcdir, this.dstdir);
+}
+
 class _MyHomePageState extends State<MyHomePage> {
 
   String srcdir = "";
@@ -40,24 +49,95 @@ class _MyHomePageState extends State<MyHomePage> {
   //late Image img = Image.file(File(""), cacheWidth: 80, errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
   //              return const Text('??');
   //            },);
+  String current_file = "";
 
-  void trans(){
-    
+  static void iso_trans( TransCmd cmd ){
+    String _srcdir = cmd.srcdir ?? "";
+    String _dstdir = cmd.dstdir ?? "";
+
     try{
-      List<FileSystemEntity> plist = Directory(srcdir)?.listSync() ?? [];
+      List<FileSystemEntity> plist = Directory(_srcdir).listSync();
       plist.sort((a,b) => a.path.compareTo(b.path));
+      int count=0;
       for( var p in plist ){
+        cmd.sendport?.send( "${++count} / ${plist.length}");
         Uint8List  _imageData = File(p.path).readAsBytesSync();
         imgLib.Image? image = imgLib.decodeImage(_imageData);
         if( image != null ){
-          print( "${p.path} -> $dstdir${p.path.substring(srcdir.length)}");
+          //cmd.sendport?.send( "${p.path} -> $_dstdir${p.path.substring(_srcdir.length)}");          
           imgLib.Image rotatedImage = imgLib.copyRotate(image, 180);
           Uint8List _rotated_imageData = Uint8List.fromList(imgLib.encodeJpg(rotatedImage));
-          File("$dstdir${p.path.substring(srcdir.length)}").writeAsBytesSync(_rotated_imageData);
+          File("$_dstdir${p.path.substring(_srcdir.length)}").writeAsBytesSync(_rotated_imageData);
         }
       }
     }catch(e){
-      print(e);
+      print(e.toString());
+      cmd.sendport?.send(e.toString());
+    }
+    cmd.sendport?.send("end");
+  }
+
+  void trans(){
+    final ReceivePort receivePort = ReceivePort();
+
+    // 通信側からのコールバック
+    receivePort.listen(( message ) {
+      //setState(() {
+      //  current_file = message;
+      //});
+      kurukuru_msg(context, message);
+      if( message=="end"){
+        kurukuruOff(context);
+        receivePort.close();
+      }
+    });
+
+    Isolate.spawn( iso_trans, TransCmd(receivePort.sendPort, srcdir, dstdir) );
+  }
+
+  static bool onkurukuru = false;
+  static String kmsg = "";
+
+  static void kurukuru(context, {msg=""}){
+    print("kurukuru "+msg); 
+    kmsg = msg;
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: false,
+      transitionDuration: Duration(milliseconds: 250), // ダイアログフェードインmsec
+      barrierColor: Colors.black.withOpacity(0.4), // 画面マスクの透明度
+      pageBuilder: (BuildContext context, Animation animation,
+          Animation secondaryAnimation) {
+        return Center(
+            child:Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text( msg,
+                  style: TextStyle(
+                            fontSize: 18.0,
+                            color: Colors.white,
+                            decoration: TextDecoration.none),),
+                CircularProgressIndicator(), 
+              ],                      
+          )
+        );
+      });
+    onkurukuru = true;
+  }
+
+  static void kurukuruOff(context){
+    if( onkurukuru ){
+      Navigator.pop(context);
+    }
+    onkurukuru = false;
+  }
+
+  static void kurukuru_msg(context, msg){
+    if( msg != kmsg ){
+      if( onkurukuru ){
+        Navigator.pop(context);
+      }
+      kurukuru(context, msg:msg);
     }
   }
 
@@ -108,6 +188,7 @@ class _MyHomePageState extends State<MyHomePage> {
               style: TextButton.styleFrom( backgroundColor: Colors.red, ),
             ),
             //img
+            Text(current_file)
           ],
         ),
       ),
