@@ -6,6 +6,8 @@ import 'package:image/image.dart' as imgLib;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
+import 'kurukuru.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -17,11 +19,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Image Batch',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Image Batch'),
     );
   }
 }
@@ -62,6 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
       for( var p in plist ){
         cmd.sendport?.send( "${++count} / ${plist.length}");
         Uint8List  _imageData = File(p.path).readAsBytesSync();
+
         imgLib.Image? image = imgLib.decodeImage(_imageData);
         if( image != null ){
           //cmd.sendport?.send( "${p.path} -> $_dstdir${p.path.substring(_srcdir.length)}");          
@@ -85,9 +88,9 @@ class _MyHomePageState extends State<MyHomePage> {
       //setState(() {
       //  current_file = message;
       //});
-      kurukuru_msg(context, message);
+      Kurukuru.msg(context, message);
       if( message=="end"){
-        kurukuruOff(context);
+        Kurukuru.off(context);
         receivePort.close();
       }
     });
@@ -95,67 +98,26 @@ class _MyHomePageState extends State<MyHomePage> {
     Isolate.spawn( iso_trans, TransCmd(receivePort.sendPort, srcdir, dstdir) );
   }
 
-  static bool onkurukuru = false;
-  static String kmsg = "";
-
-  static void kurukuru(context, {msg=""}){
-    print("kurukuru "+msg); 
-    kmsg = msg;
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: false,
-      transitionDuration: Duration(milliseconds: 250), // ダイアログフェードインmsec
-      barrierColor: Colors.black.withOpacity(0.4), // 画面マスクの透明度
-      pageBuilder: (BuildContext context, Animation animation,
-          Animation secondaryAnimation) {
-        return Center(
-            child:Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text( msg,
-                  style: TextStyle(
-                            fontSize: 18.0,
-                            color: Colors.white,
-                            decoration: TextDecoration.none),),
-                CircularProgressIndicator(), 
-              ],                      
-          )
-        );
-      });
-    onkurukuru = true;
-  }
-
-  static void kurukuruOff(context){
-    if( onkurukuru ){
-      Navigator.pop(context);
-    }
-    onkurukuru = false;
-  }
-
-  static void kurukuru_msg(context, msg){
-    if( msg != kmsg ){
-      if( onkurukuru ){
-        Navigator.pop(context);
-      }
-      kurukuru(context, msg:msg);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    Text srcdir_box = Text('$srcdir',style: Theme.of(context).textTheme.headline4,);
-    Text dstdir_box = Text('$dstdir',style: Theme.of(context).textTheme.headline4,);
+    Text srcdir_box = Text(' $srcdir',style: Theme.of(context).textTheme.bodyText1,);
+    Text dstdir_box = Text(' $dstdir',style: Theme.of(context).textTheme.bodyText1,);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      body: 
+
+        Column(
+          mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[   
-            Column(children: [
-              srcdir_box,
+            Text(' '),   
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(' '),
               TextButton(
                 onPressed: ()async{
                   var res = await FilePicker.platform.getDirectoryPath();
@@ -166,9 +128,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Text("src"),
                 style: TextButton.styleFrom( backgroundColor: Colors.orange, ),
               ),
-            ],),        
-            Column(children: [
-              dstdir_box,
+              srcdir_box,
+            ],),    
+            Text(' '),    
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(' '),
               TextButton(
                 onPressed: ()async{
                   var res = await FilePicker.platform.getDirectoryPath();
@@ -179,19 +145,36 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Text("dst"),
                 style: TextButton.styleFrom( backgroundColor: Colors.orange, ),
               ),
-            ],),        
-            TextButton(
-              onPressed: ()async{
-                trans();
-              }, 
-              child: Text("go"),
-              style: TextButton.styleFrom( backgroundColor: Colors.red, ),
-            ),
-            //img
+              dstdir_box,
+            ],), 
+            const Divider(
+              height: 20,
+              thickness: 2,
+              indent: 20,
+              endIndent: 10,
+              color: Colors.blue,
+            ),       
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(' '),
+            ],), 
+  
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [  
+                TextButton(
+                  onPressed: ()async{
+                    trans();
+                  }, 
+                  child: Text("start"),
+                  style: TextButton.styleFrom( primary: Colors.white, backgroundColor: Colors.red, ),
+                ),
+                Text(' '),
             Text(current_file)
+            ]),
           ],
-        ),
-      ),
+        )
     );
   }
 }
