@@ -41,7 +41,8 @@ class TransCmd {
   SendPort? sendport;
   String? srcdir;
   String? dstdir;
-  TransCmd(this.sendport, this.srcdir, this.dstdir);
+  String? rotangl;
+  TransCmd(this.sendport, this.srcdir, this.dstdir, this.rotangl);
 }
 
 class _MyHomePageState extends State<MyHomePage> {
@@ -52,6 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
   //              return const Text('??');
   //            },);
   String current_file = "";
+  String _type = "180";
 
   static void iso_trans( TransCmd cmd ){
     String _srcdir = cmd.srcdir ?? "";
@@ -68,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
         imgLib.Image? image = imgLib.decodeImage(_imageData);
         if( image != null ){
           //cmd.sendport?.send( "${p.path} -> $_dstdir${p.path.substring(_srcdir.length)}");          
-          imgLib.Image rotatedImage = imgLib.copyRotate(image, 180);
+          imgLib.Image rotatedImage = imgLib.copyRotate(image, int.parse(cmd.rotangl??"0"));
           Uint8List _rotated_imageData = Uint8List.fromList(imgLib.encodeJpg(rotatedImage));
           File("$_dstdir${p.path.substring(_srcdir.length)}").writeAsBytesSync(_rotated_imageData);
         }
@@ -95,7 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     });
 
-    Isolate.spawn( iso_trans, TransCmd(receivePort.sendPort, srcdir, dstdir) );
+    Isolate.spawn( iso_trans, TransCmd(receivePort.sendPort, srcdir, dstdir, _type) );
   }
 
 
@@ -157,7 +159,37 @@ class _MyHomePageState extends State<MyHomePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Text(' '),
+                Text('  rotate angle '),
+                Radio(
+                  activeColor: Colors.blue,
+                  value: '90',
+                  groupValue: _type,
+                  onChanged: 
+                    (v){ setState(() {
+                      _type="90";
+                    });  },
+                ),
+                Text('→90'),
+                Radio(
+                  activeColor: Colors.blue,
+                  value: '180',
+                  groupValue: _type,
+                  onChanged:
+                    (v){ setState(() {
+                      _type="180";
+                    });  },
+                ),
+                Text('↓180'),
+                Radio(
+                  activeColor: Colors.blue,
+                  value: '270',
+                  groupValue: _type,
+                  onChanged:
+                    (v){ setState(() {
+                      _type="270";
+                    });  },
+                ),
+                Text('←270'),
             ],), 
   
             Row(
@@ -165,6 +197,7 @@ class _MyHomePageState extends State<MyHomePage> {
               children: [  
                 TextButton(
                   onPressed: ()async{
+                    print("$_type");
                     trans();
                   }, 
                   child: Text("start"),
