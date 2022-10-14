@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "df680fc4-2168-4cc6-8b79-e75f6ce2d797": {
+      "ProjectGuid": "df680fc4-2168-4cc6-8b79-e75f6ce2d797",
+      "DisplayName": "OpenCVProc",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}
