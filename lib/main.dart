@@ -139,11 +139,11 @@ class _MyHomePageState extends State<MyHomePage> {
       //setState(() {
       //  current_file = message;
       //});
-      if(message.toString().startsWith("#")){
-        setState(() {
-          curimage = message.toString().substring(1);
-        });
-      }
+      //if(message.toString().startsWith("#")){
+      //  setState(() {
+      //    curimage = message.toString().substring(1);
+      //  });
+      //}
       Kurukuru.msg(context, message);
       if( message=="end"){
         Kurukuru.off(context);
@@ -165,12 +165,8 @@ class _MyHomePageState extends State<MyHomePage> {
           label: "start",
         ),
         const BottomNavigationBarItem(
-          icon: Icon(Icons.reset_tv),
+          icon: Icon(Icons.zoom_in_map),
           label: "reset",
-        ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.expand_less),
-          label: "",
         ),
   ];
 
@@ -437,12 +433,11 @@ class _MyHomePageState extends State<MyHomePage> {
               switch(index){
                 case 0:
                   trans();
-                break;
+                  break;
                 case 1:
-                break;
                 default:
-
-                break;
+                  iviewer.setTransformationValue(Matrix4.identity());
+                  break;
               }
             },            
             type: BottomNavigationBarType.fixed,
